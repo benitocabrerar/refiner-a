@@ -1,13 +1,5 @@
 # SIMREF-HC 2025: Simulador Avanzado de Refinería 🛢️
 
-![Version](https://img.shields.io/badge/version-1.2.5-blue)
-![License](https://img.shields.io/badge/license-Proprietary-red)
-![Built with](https://img.shields.io/badge/built%20with-React-61dafb)
-
-<p align="center">
-  <img src="https://i.imgur.com/placeholder.png" alt="SIMREF-HC 2025 Logo" width="300" />
-</p>
-
 ## ✨ Visión General
 
 SIMREF-HC 2025 es un simulador financiero de vanguardia diseñado específicamente para el análisis de refinerías de hidrocarburos ya establecidas y amortizadas. Desarrollado por el Ing. Benito Cabrera R., este simulador proporciona una visión integral de la operación financiera de una refinería bajo diversas condiciones de mercado y parámetros operativos.
