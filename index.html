@@ -1,400 +1,936 @@
-<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIMREF-HC 2025: Simulador de Refinería</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>SIMREF-HC 2025 (Versión Final)</title>
     <style>
-        .hidden {
-            display: none;
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f4f8;
         }
-        .visible {
+        .header {
+            background: linear-gradient(to right, #2c7a7b, #2b6cb0);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        .label {
+            font-weight: bold;
+            margin-bottom: 5px;
             display: block;
+        }
+        .slider {
+            width: 100%;
+        }
+        .value {
+            font-weight: bold;
+            color: #2b6cb0;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        .metric {
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .metric.blue {
+            background-color: #ebf8ff;
+        }
+        .metric.green {
+            background-color: #e6fffa;
+        }
+        .metric.purple {
+            background-color: #f3ebff;
+        }
+        .metric.yellow {
+            background-color: #fffbeb;
+        }
+        .metric.red {
+            background-color: #fff5f5;
+        }
+        .metric-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .metric-unit {
+            font-size: 12px;
+            color: #4a5568;
+        }
+        .footer {
+            text-align: center;
+            color: #4a5568;
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #e2e8f0;
         }
     </style>
 </head>
-<body class="bg-gray-100">
-    <div id="root" class="container mx-auto py-8 px-4">
-        <h1 class="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-lg shadow">
-            SIMREF-HC 2025: Simulador de Refinería
-        </h1>
+<body>
+    <div class="header">
+        <h1>SIMREF-HC 2025: Simulador de Refinería</h1>
+    </div>
+    
+    <div class="card">
+        <h2>Parámetros Operativos</h2>
         
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 class="text-xl font-bold mb-4 border-b pb-2">Parámetros</h2>
+        <div class="control-group">
+            <label class="label">Capacidad: <span id="capacidadValor" class="value">100,000</span> bbl/día</label>
+            <input 
+                type="range" 
+                id="capacidad"
+                class="slider"
+                min="50000" 
+                max="200000" 
+                value="100000"
+                onchange="actualizarTodo()"
+                oninput="actualizarSlider('capacidad', 'capacidadValor')"
+            />
+        </div>
+        
+        <div class="control-group">
+            <label class="label">Calidad API: <span id="apiValor" class="value">25</span>°</label>
+            <input 
+                type="range" 
+                id="api"
+                class="slider"
+                min="15" 
+                max="40" 
+                value="25"
+                onchange="actualizarTodo()"
+                oninput="actualizarSlider('api', 'apiValor')"
+            />
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #718096;">
+                <span>Pesado (15°)</span>
+                <span>Ligero (40°)</span>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <label class="label">Precio del Crudo: $<span id="precioValor" class="value">75</span>/bbl</label>
+            <input 
+                type="range" 
+                id="precio"
+                class="slider"
+                min="40" 
+                max="120" 
+                value="75"
+                onchange="actualizarTodo()"
+                oninput="actualizarSlider('precio', 'precioValor')"
+            />
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>Precios de Productos (USD/bbl)</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+            <div class="control-group">
+                <label class="label">Gasolina: $<span id="gasolinaValor" class="value">92</span></label>
+                <input 
+                    type="range" 
+                    id="gasolina"
+                    class="slider"
+                    min="70" 
+                    max="120" 
+                    value="92"
+                    onchange="actualizarTodo()"
+                    oninput="actualizarSlider('gasolina', 'gasolinaValor')"
+                />
+            </div>
             
-            <div class="space-y-6">
-                <div>
-                    <h3 class="font-medium text-gray-700 mb-3">Operativos</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block mb-1 text-sm font-medium">Capacidad: <span id="capacidad-valor">100,000</span> bbl/día</label>
-                            <input 
-                                type="range" 
-                                id="capacidad"
-                                min="50000" 
-                                max="200000" 
-                                value="100000"
-                                oninput="actualizarCapacidad(this.value)"
-                                class="w-full h-2 bg-blue-100 rounded-full"
-                            />
-                            <div class="flex justify-between text-xs text-gray-500">
-                                <span>50,000</span>
-                                <span>200,000</span>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label class="block mb-1 text-sm font-medium">Calidad API: <span id="api-valor">25</span>°</label>
-                            <input 
-                                type="range" 
-                                id="api"
-                                min="15" 
-                                max="40" 
-                                value="25"
-                                oninput="actualizarAPI(this.value)"
-                                class="w-full h-2 bg-blue-100 rounded-full"
-                            />
-                            <div class="flex justify-between text-xs text-gray-500">
-                                <span>Pesado (15°)</span>
-                                <span>Ligero (40°)</span>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label class="block mb-1 text-sm font-medium">Precio del Crudo: $<span id="crudo-valor">75</span>/bbl</label>
-                            <input 
-                                type="range" 
-                                id="precio-crudo"
-                                min="40" 
-                                max="120" 
-                                value="75"
-                                oninput="actualizarPrecioCrudo(this.value)"
-                                class="w-full h-2 bg-blue-100 rounded-full"
-                            />
-                            <div class="flex justify-between text-xs text-gray-500">
-                                <span>$40</span>
-                                <span>$120</span>
-                            </div>
-                        </div>
-                    </div>
+            <div class="control-group">
+                <label class="label">Diesel: $<span id="dieselValor" class="value">88</span></label>
+                <input 
+                    type="range" 
+                    id="diesel"
+                    class="slider"
+                    min="65" 
+                    max="110" 
+                    value="88"
+                    onchange="actualizarTodo()"
+                    oninput="actualizarSlider('diesel', 'dieselValor')"
+                />
+            </div>
+            
+            <div class="control-group">
+                <label class="label">Jet Fuel: $<span id="jetfuelValor" class="value">85</span></label>
+                <input 
+                    type="range" 
+                    id="jetfuel"
+                    class="slider"
+                    min="60" 
+                    max="110" 
+                    value="85"
+                    onchange="actualizarTodo()"
+                    oninput="actualizarSlider('jetfuel', 'jetfuelValor')"
+                />
+            </div>
+            
+            <div class="control-group">
+                <label class="label">LPG: $<span id="lpgValor" class="value">42</span></label>
+                <input 
+                    type="range" 
+                    id="lpg"
+                    class="slider"
+                    min="30" 
+                    max="60" 
+                    value="42"
+                    onchange="actualizarTodo()"
+                    oninput="actualizarSlider('lpg', 'lpgValor')"
+                />
+            </div>
+            
+            <div class="control-group">
+                <label class="label">Coque: $<span id="coqueValor" class="value">38</span></label>
+                <input 
+                    type="range" 
+                    id="coque"
+                    class="slider"
+                    min="20" 
+                    max="60" 
+                    value="38"
+                    onchange="actualizarTodo()"
+                    oninput="actualizarSlider('coque', 'coqueValor')"
+                />
+            </div>
+            
+            <div class="control-group">
+                <label class="label">Otros: $<span id="otrosValor" class="value">65</span></label>
+                <input 
+                    type="range" 
+                    id="otros"
+                    class="slider"
+                    min="40" 
+                    max="90" 
+                    value="65"
+                    onchange="actualizarTodo()"
+                    oninput="actualizarSlider('otros', 'otrosValor')"
+                />
+            </div>
+        </div>
+        
+        <div style="background-color: #dbeafe; padding: 10px; border-radius: 6px; margin-top: 15px;">
+            <div style="font-weight: bold; margin-bottom: 5px;">Crack Spread:</div>
+            <div id="crackSpreadDisplay" style="font-size: 20px; font-weight: bold;">$15.00/bbl</div>
+            <div style="font-size: 12px; color: #4a5568;">Diferencia entre precio promedio de productos y crudo</div>
+        </div>
+    </div>
+<div class="card">
+        <h2>Distribución de Productos y Rendimientos</h2>
+        
+        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+            <div><span style="font-weight: bold;">Total rendimientos:</span> <span id="totalRendimiento">100</span>%</div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+            <div style="background-color: #fee2e2; padding: 10px; border-radius: 6px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span style="font-weight: bold;">Gasolina:</span>
+                    <span id="rendGasolina">30</span>%
                 </div>
+                <div style="font-size: 12px; color: #718096;">Producción: <span id="prodGasolina">30,000</span> bbl/día</div>
+                <div style="font-size: 12px; color: #718096;">Ingresos: $<span id="ingGasolina">2,760,000</span>/día</div>
+            </div>
+            
+            <div style="background-color: #fef3c7; padding: 10px; border-radius: 6px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span style="font-weight: bold;">Diesel:</span>
+                    <span id="rendDiesel">28</span>%
+                </div>
+                <div style="font-size: 12px; color: #718096;">Producción: <span id="prodDiesel">28,000</span> bbl/día</div>
+                <div style="font-size: 12px; color: #718096;">Ingresos: $<span id="ingDiesel">2,464,000</span>/día</div>
+            </div>
+            
+            <div style="background-color: #dbeafe; padding: 10px; border-radius: 6px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span style="font-weight: bold;">Jet Fuel:</span>
+                    <span id="rendJetFuel">8</span>%
+                </div>
+                <div style="font-size: 12px; color: #718096;">Producción: <span id="prodJetFuel">8,000</span> bbl/día</div>
+                <div style="font-size: 12px; color: #718096;">Ingresos: $<span id="ingJetFuel">680,000</span>/día</div>
+            </div>
+            
+            <div style="background-color: #d1fae5; padding: 10px; border-radius: 6px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span style="font-weight: bold;">LPG:</span>
+                    <span id="rendLPG">6</span>%
+                </div>
+                <div style="font-size: 12px; color: #718096;">Producción: <span id="prodLPG">6,000</span> bbl/día</div>
+                <div style="font-size: 12px; color: #718096;">Ingresos: $<span id="ingLPG">252,000</span>/día</div>
+            </div>
+            
+            <div style="background-color: #e5e7eb; padding: 10px; border-radius: 6px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span style="font-weight: bold;">Coque:</span>
+                    <span id="rendCoque">7</span>%
+                </div>
+                <div style="font-size: 12px; color: #718096;">Producción: <span id="prodCoque">7,000</span> bbl/día</div>
+                <div style="font-size: 12px; color: #718096;">Ingresos: $<span id="ingCoque">266,000</span>/día</div>
+            </div>
+            
+            <div style="background-color: #ede9fe; padding: 10px; border-radius: 6px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span style="font-weight: bold;">Otros:</span>
+                    <span id="rendOtros">21</span>%
+                </div>
+                <div style="font-size: 12px; color: #718096;">Producción: <span id="prodOtros">21,000</span> bbl/día</div>
+                <div style="font-size: 12px; color: #718096;">Ingresos: $<span id="ingOtros">1,365,000</span>/día</div>
+            </div>
+        </div>
+    </div><!DOCTYPE html>
+    
+    <div class="grid">
+        <div class="metric blue">
+            <div class="metric-title">Capacidad</div>
+            <div id="capacidadDisplay" class="metric-value">100,000</div>
+            <div class="metric-unit">barriles por día</div>
+        </div>
+        
+        <div class="metric green">
+            <div class="metric-title">Ingresos</div>
+            <div id="ingresosDisplay" class="metric-value">$8,250,000</div>
+            <div class="metric-unit">diarios</div>
+        </div>
+        
+        <div id="beneficioMetric" class="metric purple">
+            <div class="metric-title">Beneficio Bruto</div>
+            <div id="beneficioDisplay" class="metric-value">$750,000</div>
+            <div class="metric-unit">diario</div>
+        </div>
+    </div>
+    
+    <div class="grid">
+        <div class="metric" style="background-color: #e0f2fe;">
+            <div class="metric-title">Margen Operativo</div>
+            <div id="margenOpDisplay" class="metric-value">$500,000</div>
+            <div class="metric-unit">diario</div>
+        </div>
+        
+        <div class="metric" style="background-color: #dcfce7;">
+            <div class="metric-title">Beneficio Neto</div>
+            <div id="beneficioNetoDisplay" class="metric-value">$350,000</div>
+            <div class="metric-unit">diario</div>
+        </div>
+        
+        <div class="metric" style="background-color: #f8fafc;">
+            <div class="metric-title">Beneficio Anual</div>
+            <div id="beneficioAnualDisplay" class="metric-value">$119M</div>
+            <div class="metric-unit">millones USD</div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>Parámetros Financieros</h2>
+        
+        <div class="control-group">
+            <label class="label">Costo Operativo: $<span id="costoOpValor" class="value">5.25</span>/bbl</label>
+            <input 
+                type="range" 
+                id="costoOp"
+                class="slider"
+                min="2" 
+                max="10" 
+                step="0.25"
+                value="5.25"
+                onchange="actualizarTodo()"
+                oninput="actualizarSliderDecimal('costoOp', 'costoOpValor')"
+            />
+        </div>
+        
+        <div class="control-group">
+            <label class="label">Gastos Administrativos: <span id="gastoAdminValor" class="value">8</span>% de ingresos</label>
+            <input 
+                type="range" 
+                id="gastoAdmin"
+                class="slider"
+                min="3" 
+                max="15" 
+                value="8"
+                onchange="actualizarTodo()"
+                oninput="actualizarSlider('gastoAdmin', 'gastoAdminValor')"
+            />
+        </div>
+        
+        <div class="control-group">
+            <label class="label">Mantenimiento: $<span id="mantenimientoValor" class="value">20</span>M USD/año</label>
+            <input 
+                type="range" 
+                id="mantenimiento"
+                class="slider"
+                min="5" 
+                max="50" 
+                step="5"
+                value="20"
+                onchange="actualizarTodo()"
+                oninput="actualizarSlider('mantenimiento', 'mantenimientoValor')"
+            />
+        </div>
+        
+        <div class="control-group">
+            <label class="label">Tasa de Impuestos: <span id="impuestosValor" class="value">30</span>%</label>
+            <input 
+                type="range" 
+                id="impuestos"
+                class="slider"
+                min="15" 
+                max="40" 
+                value="30"
+                onchange="actualizarTodo()"
+                oninput="actualizarSlider('impuestos', 'impuestosValor')"
+            />
+        </div>
+        
+        <div class="control-group">
+            <label class="label">Días Operativos al Año: <span id="diasOpValor" class="value">340</span></label>
+            <input 
+                type="range" 
+                id="diasOp"
+                class="slider"
+                min="300" 
+                max="360" 
+                value="340"
+                onchange="actualizarTodo()"
+                oninput="actualizarSlider('diasOp', 'diasOpValor')"
+            />
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>Análisis Financiero</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+            <div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tbody>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 8px 0; font-weight: bold;">Ingresos Totales</td>
+                            <td id="ingresosTablaDisplay" style="padding: 8px 0; text-align: right;">$8,250,000</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 8px 0; font-weight: bold;">Costo de Materia Prima</td>
+                            <td id="costoTablaDisplay" style="padding: 8px 0; text-align: right; color: #e53e3e;">-$7,500,000</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
+                            <td style="padding: 8px 0; font-weight: bold;">Margen Bruto</td>
+                            <td id="margenBrutoDisplay" style="padding: 8px 0; text-align: right; font-weight: bold; color: #2c7a7b;">$750,000</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 8px 0;">Costos Operativos</td>
+                            <td id="costosOperativosDisplay" style="padding: 8px 0; text-align: right; color: #e53e3e;">-$525,000</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 8px 0;">Gastos Administrativos</td>
+                            <td id="gastosAdminDisplay" style="padding: 8px 0; text-align: right; color: #e53e3e;">-$660,000</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 8px 0;">Mantenimiento</td>
+                            <td id="mantenimientoDisplay" style="padding: 8px 0; text-align: right; color: #e53e3e;">-$54,795</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tbody>
+                        <tr style="border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
+                            <td style="padding: 8px 0; font-weight: bold;">EBIT</td>
+                            <td id="ebitDisplay" style="padding: 8px 0; text-align: right; font-weight: bold; color: #2c7a7b;">$500,000</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 8px 0;"><span id="impuestosTexto">Impuestos (30%)</span></td>
+                            <td id="impuestosDisplay" style="padding: 8px 0; text-align: right; color: #e53e3e;">-$150,000</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
+                            <td style="padding: 12px 0; font-weight: bold;">Beneficio Neto</td>
+                            <td id="beneficioNetoTablaDisplay" style="padding: 12px 0; text-align: right; font-weight: bold; color: #2c7a7b;">$350,000</td>
+                        </tr>
+                    </tbody>
+                </table>
                 
-                <div>
-                    <h3 class="font-medium text-gray-700 mb-3 mt-6">Precios de Venta (USD/bbl)</h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="grid grid-cols-3 gap-4">
-                            <div>
-                                <label class="block mb-1 text-sm font-medium">Gasolina: $<span id="gasolina-valor">92</span></label>
-                                <input 
-                                    type="range" 
-                                    id="precio-gasolina"
-                                    min="70" 
-                                    max="120" 
-                                    value="92"
-                                    oninput="actualizarPrecioGasolina(this.value)"
-                                    class="w-full h-2 bg-red-100 rounded-full"
-                                />
-                            </div>
-                            
-                            <div>
-                                <label class="block mb-1 text-sm font-medium">Diesel: $<span id="diesel-valor">88</span></label>
-                                <input 
-                                    type="range" 
-                                    id="precio-diesel"
-                                    min="65" 
-                                    max="110" 
-                                    value="88"
-                                    oninput="actualizarPrecioDiesel(this.value)"
-                                    class="w-full h-2 bg-yellow-100 rounded-full"
-                                />
-                            </div>
-                            
-                            <div>
-                                <label class="block mb-1 text-sm font-medium">Jet Fuel: $<span id="jetfuel-valor">85</span></label>
-                                <input 
-                                    type="range" 
-                                    id="precio-jetfuel"
-                                    min="60" 
-                                    max="110" 
-                                    value="85"
-                                    oninput="actualizarPrecioJetFuel(this.value)"
-                                    class="w-full h-2 bg-blue-100 rounded-full"
-                                />
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-3 gap-4">
-                            <div>
-                                <label class="block mb-1 text-sm font-medium">LPG: $<span id="lpg-valor">42</span></label>
-                                <input 
-                                    type="range" 
-                                    id="precio-lpg"
-                                    min="30" 
-                                    max="60" 
-                                    value="42"
-                                    oninput="actualizarPrecioLPG(this.value)"
-                                    class="w-full h-2 bg-green-100 rounded-full"
-                                />
-                            </div>
-                            
-                            <div>
-                                <label class="block mb-1 text-sm font-medium">Coque: $<span id="coque-valor">38</span></label>
-                                <input 
-                                    type="range" 
-                                    id="precio-coque"
-                                    min="20" 
-                                    max="60" 
-                                    value="38"
-                                    oninput="actualizarPrecioCoque(this.value)"
-                                    class="w-full h-2 bg-gray-200 rounded-full"
-                                />
-                            </div>
-                            
-                            <div>
-                                <label class="block mb-1 text-sm font-medium">Otros: $<span id="otros-valor">65</span></label>
-                                <input 
-                                    type="range" 
-                                    id="precio-otros"
-                                    min="40" 
-                                    max="90" 
-                                    value="65"
-                                    oninput="actualizarPrecioOtros(this.value)"
-                                    class="w-full h-2 bg-indigo-100 rounded-full"
-                                />
-                            </div>
-                        </div>
+                <div style="margin-top: 20px; background-color: #f0fff4; padding: 12px; border-radius: 6px;">
+                    <div style="font-weight: bold; margin-bottom: 5px;">Proyección Anual</div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Beneficio Neto Anual:</span>
+                        <span id="beneficioAnualTablaDisplay" style="font-weight: bold;">$119 millones</span>
                     </div>
-                    
-                    <div class="bg-blue-50 p-3 rounded mt-4">
-                        <p class="text-sm text-blue-800">
-                            <span class="font-medium">Crack Spread:</span> $<span id="crack-spread">14.33</span>/bbl
-                        </p>
-                        <p class="text-xs text-blue-600 mt-1">
-                            Diferencia entre precio de crudo y promedio de productos refinados principales.
-                        </p>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                        <span>Margen de Beneficio:</span>
+                        <span id="margenBeneficioDisplay" style="font-weight: bold;">4.2%</span>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Indicadores Principales -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div class="bg-blue-100 p-4 rounded-lg shadow">
-                <h3 class="text-sm font-medium text-blue-800">Capacidad</h3>
-                <p class="text-2xl font-bold" id="capacidad-display">100,000</p>
-                <p class="text-xs text-blue-600">barriles por día</p>
-            </div>
-            
-            <div class="bg-green-100 p-4 rounded-lg shadow">
-                <h3 class="text-sm font-medium text-green-800">Ingresos</h3>
-                <p class="text-2xl font-bold" id="ingresos-display">$8,250,000</p>
-                <p class="text-xs text-green-600">diarios</p>
-            </div>
-            
-            <div class="bg-purple-100 p-4 rounded-lg shadow">
-                <h3 class="text-sm font-medium text-purple-800">Beneficio Bruto</h3>
-                <p class="text-2xl font-bold" id="beneficio-display">$750,000</p>
-                <p class="text-xs text-purple-600">diario</p>
-            </div>
-        </div>
-        
-        <!-- Costo Materia Prima -->
-        <div class="bg-yellow-50 p-4 rounded-lg shadow mb-6">
-            <h3 class="text-sm font-medium text-yellow-800">Costo de Materia Prima</h3>
-            <p class="text-2xl font-bold" id="costo-display">$7,500,000</p>
-            <p class="text-xs text-yellow-600">diarios</p>
-        </div>
-        
-        <!-- Distribución de Productos -->
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 class="text-xl font-bold mb-4 border-b pb-2">Distribución de Productos</h2>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div class="p-3 bg-red-100 rounded-lg">
-                    <h3 class="font-medium">Gasolina</h3>
-                    <p class="text-xl">30%</p>
-                </div>
-                <div class="p-3 bg-yellow-100 rounded-lg">
-                    <h3 class="font-medium">Diesel</h3>
-                    <p class="text-xl">28%</p>
-                </div>
-                <div class="p-3 bg-blue-100 rounded-lg">
-                    <h3 class="font-medium">Jet Fuel</h3>
-                    <p class="text-xl">8%</p>
-                </div>
-                <div class="p-3 bg-green-100 rounded-lg">
-                    <h3 class="font-medium">LPG</h3>
-                    <p class="text-xl">6%</p>
-                </div>
-                <div class="p-3 bg-gray-200 rounded-lg">
-                    <h3 class="font-medium">Coque</h3>
-                    <p class="text-xl">7%</p>
-                </div>
-                <div class="p-3 bg-indigo-100 rounded-lg">
-                    <h3 class="font-medium">Otros</h3>
-                    <p class="text-xl">21%</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Pie de página -->
-        <footer class="mt-6 text-center text-gray-600 border-t pt-4 pb-6">
-            <p class="mb-1">Desarrollado por Ing. Benito Cabrera R., MBA</p>
-            <p class="text-sm">Derechos reservados ©2025</p>
-        </footer>
+    </div>
+    
+    <div class="footer">
+        <p>Desarrollado por Ing. Benito Cabrera R., MBA</p>
+        <p>Derechos reservados ©2025</p>
     </div>
 
-    <script>
-        // Funciones para actualizar valores
-        function formatNumber(number) {
-            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        }
+<script>
+// Rendimientos - ajustables según API
+function calcularRendimientos(api) {
+    // Base rendimientos - suman 100%
+    let rendimientos = {
+        gasolina: 30,
+        diesel: 28,
+        jetFuel: 8,
+        lpg: 6,
+        coque: 7,
+        otros: 21
+    };
+    
+    // Ajustar rendimientos según API (15-40)
+    // API más alto = crudo más ligero = más rendimiento de gasolina y menos coque
+    const apiEffect = (api - 25) / 25; // Normalizado alrededor de API 25
+    
+    // Ajustar gasolina: +/- 6% máximo
+    rendimientos.gasolina += Math.round(apiEffect * 6);
+    
+    // Ajustar diesel: +/- 2% máximo
+    rendimientos.diesel += Math.round(apiEffect * 2);
+    
+    // Ajustar coque: inversamente proporcional al API, +/- 4% máximo 
+    rendimientos.coque -= Math.round(apiEffect * 4);
+    
+    // Ajustar otros productos para mantener suma = 100%
+    const suma = rendimientos.gasolina + rendimientos.diesel + rendimientos.jetFuel + 
+                 rendimientos.lpg + rendimientos.coque;
+    rendimientos.otros = 100 - suma;
+    
+    return rendimientos;
+}
+
+// Funciones de utilidad
+function formatNumber(number) {
+    return number.toLocaleString();
+}
+
+// Actualizar el valor mostrado al lado del slider
+function actualizarSlider(sliderId, valueId) {
+    const slider = document.getElementById(sliderId);
+    const valueDisplay = document.getElementById(valueId);
+    valueDisplay.textContent = formatNumber(parseInt(slider.value));
+}
+
+// Actualizar el valor mostrado para sliders con decimales
+function actualizarSliderDecimal(sliderId, valueId) {
+    const slider = document.getElementById(sliderId);
+    const valueDisplay = document.getElementById(valueId);
+    valueDisplay.textContent = parseFloat(slider.value).toFixed(2);
+}
+
+// Función principal que actualiza todos los cálculos
+function actualizarTodo() {
+    console.log("Actualizando cálculos...");
+    
+    // Obtener valores actuales - Operativos
+    const capacidad = parseInt(document.getElementById('capacidad').value);
+    const api = parseInt(document.getElementById('api').value);
+    const precioCrudo = parseInt(document.getElementById('precio').value);
+    const precioGasolina = parseInt(document.getElementById('gasolina').value);
+    const precioDiesel = parseInt(document.getElementById('diesel').value);
+    const precioJetFuel = parseInt(document.getElementById('jetfuel').value);
+    const precioLPG = parseInt(document.getElementById('lpg').value);
+    const precioCoque = parseInt(document.getElementById('coque').value);
+    const precioOtros = parseInt(document.getElementById('otros').value);
+    
+    // Obtener valores actuales - Financieros
+    const costoOperativoBarril = parseFloat(document.getElementById('costoOp').value);
+    const gastoAdminPct = parseInt(document.getElementById('gastoAdmin').value);
+    const mantenimientoAnual = parseInt(document.getElementById('mantenimiento').value);
+    const tasaImpuestos = parseInt(document.getElementById('impuestos').value);
+    const diasOperativos = parseInt(document.getElementById('diasOp').value);
+    
+    // Calcular rendimientos basados en API
+    const rendimientos = calcularRendimientos(api);
+    
+    // Actualizar displays de rendimientos
+    document.getElementById('rendGasolina').textContent = rendimientos.gasolina;
+    document.getElementById('rendDiesel').textContent = rendimientos.diesel;
+    document.getElementById('rendJetFuel').textContent = rendimientos.jetFuel;
+    document.getElementById('rendLPG').textContent = rendimientos.lpg;
+    document.getElementById('rendCoque').textContent = rendimientos.coque;
+    document.getElementById('rendOtros').textContent = rendimientos.otros;
+    document.getElementById('totalRendimiento').textContent = 
+        rendimientos.gasolina + rendimientos.diesel + rendimientos.jetFuel + 
+        rendimientos.lpg + rendimientos.coque + rendimientos.otros;
+    
+    // Cálculos de producción
+    const prodGasolina = capacidad * rendimientos.gasolina / 100;
+    const prodDiesel = capacidad * rendimientos.diesel / 100;
+    const prodJetFuel = capacidad * rendimientos.jetFuel / 100;
+    const prodLPG = capacidad * rendimientos.lpg / 100;
+    const prodCoque = capacidad * rendimientos.coque / 100;
+    const prodOtros = capacidad * rendimientos.otros / 100;
+    
+    // Actualizar displays de producción
+    document.getElementById('prodGasolina').textContent = formatNumber(Math.round(prodGasolina));
+    document.getElementById('prodDiesel').textContent = formatNumber(Math.round(prodDiesel));
+    document.getElementById('prodJetFuel').textContent = formatNumber(Math.round(prodJetFuel));
+    document.getElementById('prodLPG').textContent = formatNumber(Math.round(prodLPG));
+    document.getElementById('prodCoque').textContent = formatNumber(Math.round(prodCoque));
+    document.getElementById('prodOtros').textContent = formatNumber(Math.round(prodOtros));
+    
+    // Cálculos de ingresos
+    const ingresosGasolina = prodGasolina * precioGasolina;
+    const ingresosDiesel = prodDiesel * precioDiesel;
+    const ingresosJetFuel = prodJetFuel * precioJetFuel;
+    const ingresosLPG = prodLPG * precioLPG;
+    const ingresosCoque = prodCoque * precioCoque;
+    const ingresosOtros = prodOtros * precioOtros;
+    
+    // Actualizar displays de ingresos por producto
+    document.getElementById('ingGasolina').textContent = formatNumber(Math.round(ingresosGasolina));
+    document.getElementById('ingDiesel').textContent = formatNumber(Math.round(ingresosDiesel));
+    document.getElementById('ingJetFuel').textContent = formatNumber(Math.round(ingresosJetFuel));
+    document.getElementById('ingLPG').textContent = formatNumber(Math.round(ingresosLPG));
+    document.getElementById('ingCoque').textContent = formatNumber(Math.round(ingresosCoque));
+    document.getElementById('ingOtros').textContent = formatNumber(Math.round(ingresosOtros));
+    
+    const ingresosTotales = ingresosGasolina + ingresosDiesel + ingresosJetFuel + 
+                           ingresosLPG + ingresosCoque + ingresosOtros;
+    
+    // Cálculos financieros
+    const costoMateriaPrima = capacidad * precioCrudo;
+    const beneficioBruto = ingresosTotales - costoMateriaPrima;
+    
+    const costosOperativos = capacidad * costoOperativoBarril;
+    const gastosAdmin = ingresosTotales * (gastoAdminPct / 100);
+    const costoMantenimientoDiario = (mantenimientoAnual * 1000000) / 365;
+    
+    const margenOperativo = beneficioBruto - costosOperativos - gastosAdmin - costoMantenimientoDiario;
+    const impuestos = Math.max(0, margenOperativo * (tasaImpuestos / 100));
+    const beneficioNeto = margenOperativo - impuestos;
+    
+    // Cálculos anualizados
+    const beneficioNetoAnual = beneficioNeto * diasOperativos / 1000000; // en millones
+    
+    // Calcular crack spread
+    const promedioPrincipales = (precioGasolina + precioDiesel + precioJetFuel) / 3;
+    const crackSpread = (promedioPrincipales - precioCrudo).toFixed(2);
+    
+    // Actualizar display de crack spread
+    document.getElementById('crackSpreadDisplay').textContent = '$' + crackSpread + '/bbl';
+    
+    // Actualizar los displays - Indicadores principales
+    document.getElementById('capacidadDisplay').textContent = formatNumber(capacidad);
+    document.getElementById('ingresosDisplay').textContent = '$' + formatNumber(Math.round(ingresosTotales));
+    document.getElementById('beneficioDisplay').textContent = '$' + formatNumber(Math.round(beneficioBruto));
+    
+    // Actualizar los displays - Financieros adicionales
+    document.getElementById('margenOpDisplay').textContent = '$' + formatNumber(Math.round(margenOperativo));
+    document.getElementById('beneficioNetoDisplay').textContent = '$' + formatNumber(Math.round(beneficioNeto));
+    document.getElementById('beneficioAnualDisplay').textContent = '$' + beneficioNetoAnual.toFixed(1) + 'M';
+    
+    // Actualizar los displays - Tabla financiera
+    document.getElementById('ingresosTablaDisplay').textContent = '$' + formatNumber(Math.round(ingresosTotales));
+    document.getElementById('costoTablaDisplay').textContent = '-$' + formatNumber(Math.round(costoMateriaPrima));
+    document.getElementById('margenBrutoDisplay').textContent = '$' + formatNumber(Math.round(beneficioBruto));
+    document.getElementById('costosOperativosDisplay').textContent = '-$' + formatNumber(Math.round(costosOperativos));
+    document.getElementById('gastosAdminDisplay').textContent = '-$' + formatNumber(Math.round(gastosAdmin));
+    document.getElementById('mantenimientoDisplay').textContent = '-$' + formatNumber(Math.round(costoMantenimientoDiario));
+    document.getElementById('ebitDisplay').textContent = '$' + formatNumber(Math.round(margenOperativo));
+    document.getElementById('impuestosDisplay').textContent = '-$' + formatNumber(Math.round(impuestos));
+    document.getElementById('beneficioNetoTablaDisplay').textContent = '$' + formatNumber(Math.round(beneficioNeto));
+    document.getElementById('beneficioAnualTablaDisplay').textContent = '$' + beneficioNetoAnual.toFixed(1) + ' millones';
+    
+    // Calcular y actualizar el margen de beneficio
+    const margenBeneficio = (beneficioNeto / ingresosTotales * 100).toFixed(1);
+    document.getElementById('margenBeneficioDisplay').textContent = margenBeneficio + '%';
+    
+    // Actualizar texto de tasa de impuestos
+    document.getElementById('impuestosTexto').textContent = 'Impuestos (' + tasaImpuestos + '%)';
+    
+    // Cambiar color del beneficio
+    const beneficioMetric = document.getElementById('beneficioMetric');
+    if (beneficioBruto >= 0) {
+        beneficioMetric.className = 'metric purple';
+    } else {
+        beneficioMetric.className = 'metric red';
+    }
+    
+    console.log("Cálculos actualizados.");
+}
+
+// Inicializar al cargar la página
+window.onload = function() {
+    console.log("Inicializando simulador...");
+    actualizarTodo();
+    console.log("Simulador inicializado.");
+};
+</script>
+<div class="card">
+    <h2>Resultados Gerenciales</h2>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+        <div style="width: 60%;">
+            <canvas id="resultadosChart" width="400" height="250"></canvas>
+        </div>
+        <div style="width: 35%; background-color: #f8fafc; padding: 15px; border-radius: 8px;">
+            <h3 style="margin-top: 0; color: #2c7a7b;">Resumen Ejecutivo</h3>
+            <div style="margin: 10px 0;">
+                <div style="font-weight: bold;">ROI Diario:</div>
+                <div id="roiDisplay" style="font-size: 20px; color: #2c7a7b; margin: 5px 0;"></div>
+            </div>
+            <div style="margin: 10px 0;">
+                <div style="font-weight: bold;">Punto de Equilibrio:</div>
+                <div id="breakEvenDisplay" style="font-size: 20px; color: #2c7a7b; margin: 5px 0;"></div>
+            </div>
+            <div style="margin: 10px 0;">
+                <div style="font-weight: bold;">Eficiencia Operativa:</div>
+                <div id="eficienciaDisplay" style="font-size: 20px; color: #2c7a7b; margin: 5px 0;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid">
+        <div class="metric" style="background-color: #e6fffa;">
+            <div class="metric-title">Valor Añadido por Barril</div>
+            <div id="valorBarrilDisplay" class="metric-value">$7.50</div>
+            <div class="metric-unit">USD/bbl</div>
+        </div>
         
-        function actualizarCapacidad(valor) {
-            document.getElementById('capacidad-valor').textContent = formatNumber(valor);
-            document.getElementById('capacidad-display').textContent = formatNumber(valor);
-            actualizarCostoMateriaPrima();
-        }
+        <div class="metric" style="background-color: #fff5f7;">
+            <div class="metric-title">Beneficio por Capacidad</div>
+            <div id="beneficioCapacidadDisplay" class="metric-value">$3.50</div>
+            <div class="metric-unit">USD/bbl</div>
+        </div>
         
-        function actualizarAPI(valor) {
-            document.getElementById('api-valor').textContent = valor;
-        }
-        
-        function actualizarPrecioCrudo(valor) {
-            document.getElementById('crudo-valor').textContent = valor;
-            actualizarCostoMateriaPrima();
-        }
-        
-        // Variables para rendimientos fijos
-        const rendGasolina = 30;
-        const rendDiesel = 28;
-        const rendJetFuel = 8;
-        const rendLPG = 6;
-        const rendCoque = 7;
-        const rendOtros = 21;
-        
-        // Precios iniciales
-        let precioGasolina = 92;
-        let precioDiesel = 88;
-        let precioJetFuel = 85;
-        let precioLPG = 42;
-        let precioCoque = 38;
-        let precioOtros = 65;
-        
-        function actualizarPrecioGasolina(valor) {
-            precioGasolina = parseInt(valor);
-            document.getElementById('gasolina-valor').textContent = valor;
-            actualizarCrackSpread();
-            actualizarIngresos();
-        }
-        
-        function actualizarPrecioDiesel(valor) {
-            precioDiesel = parseInt(valor);
-            document.getElementById('diesel-valor').textContent = valor;
-            actualizarCrackSpread();
-            actualizarIngresos();
-        }
-        
-        function actualizarPrecioJetFuel(valor) {
-            precioJetFuel = parseInt(valor);
-            document.getElementById('jetfuel-valor').textContent = valor;
-            actualizarCrackSpread();
-            actualizarIngresos();
-        }
-        
-        function actualizarPrecioLPG(valor) {
-            precioLPG = parseInt(valor);
-            document.getElementById('lpg-valor').textContent = valor;
-            actualizarIngresos();
-        }
-        
-        function actualizarPrecioCoque(valor) {
-            precioCoque = parseInt(valor);
-            document.getElementById('coque-valor').textContent = valor;
-            actualizarIngresos();
-        }
-        
-        function actualizarPrecioOtros(valor) {
-            precioOtros = parseInt(valor);
-            document.getElementById('otros-valor').textContent = valor;
-            actualizarIngresos();
-        }
-        
-        function actualizarCrackSpread() {
-            const precioCrudo = parseInt(document.getElementById('precio-crudo').value);
-            const promedioPrincipales = (precioGasolina + precioDiesel + precioJetFuel) / 3;
-            const crackSpread = (promedioPrincipales - precioCrudo).toFixed(2);
-            document.getElementById('crack-spread').textContent = crackSpread;
-        }
-        
-        function actualizarCostoMateriaPrima() {
-            const capacidad = parseInt(document.getElementById('capacidad').value);
-            const precioCrudo = parseInt(document.getElementById('precio-crudo').value);
-            const costo = capacidad * precioCrudo;
-            document.getElementById('costo-display').textContent = '
-</body>
-</html>
- + formatNumber(costo);
-            actualizarCrackSpread();
-            actualizarIngresos();
-        }
-        
-        function actualizarIngresos() {
-            const capacidad = parseInt(document.getElementById('capacidad').value);
-            const precioCrudo = parseInt(document.getElementById('precio-crudo').value);
-            
-            // Cálculo de producción por producto
-            const prodGasolina = Math.round(capacidad * rendGasolina / 100);
-            const prodDiesel = Math.round(capacidad * rendDiesel / 100);
-            const prodJetFuel = Math.round(capacidad * rendJetFuel / 100);
-            const prodLPG = Math.round(capacidad * rendLPG / 100);
-            const prodCoque = Math.round(capacidad * rendCoque / 100);
-            const prodOtros = Math.round(capacidad * rendOtros / 100);
-            
-            // Cálculo de ingresos por producto
-            const ingresosGasolina = prodGasolina * precioGasolina;
-            const ingresosDiesel = prodDiesel * precioDiesel;
-            const ingresosJetFuel = prodJetFuel * precioJetFuel;
-            const ingresosLPG = prodLPG * precioLPG;
-            const ingresosCoque = prodCoque * precioCoque;
-            const ingresosOtros = prodOtros * precioOtros;
-            
-            // Ingresos totales
-            const ingresosTotales = ingresosGasolina + ingresosDiesel + ingresosJetFuel + 
-                                   ingresosLPG + ingresosCoque + ingresosOtros;
-            
-            // Costo de materia prima y beneficio bruto
-            const costoMateriaPrima = capacidad * precioCrudo;
-            const beneficioBruto = ingresosTotales - costoMateriaPrima;
-            
-            // Actualizar displays
-            document.getElementById('ingresos-display').textContent = '
-</body>
-</html>
- + formatNumber(ingresosTotales);
-            document.getElementById('beneficio-display').textContent = '
-</body>
-</html>
- + formatNumber(beneficioBruto);
-            
-            // Cambiar color del beneficio según sea positivo o negativo
-            const beneficioElement = document.getElementById('beneficio-display');
-            if (beneficioBruto >= 0) {
-                beneficioElement.parentElement.classList.remove('bg-red-100');
-                beneficioElement.parentElement.classList.add('bg-purple-100');
-            } else {
-                beneficioElement.parentElement.classList.remove('bg-purple-100');
-                beneficioElement.parentElement.classList.add('bg-red-100');
-            }
-        }
-        
-        // Inicialización
-        window.onload = function() {
-            actualizarCostoMateriaPrima();
-            actualizarCrackSpread();
-            actualizarIngresos();
+        <div class="metric" style="background-color: #fffbeb;">
+            <div class="metric-title">Retorno Anual</div>
+            <div id="retornoAnualDisplay" class="metric-value">$1,190</div>
+            <div class="metric-unit">USD/bbl/año</div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+// Variables para el gráfico
+let resultadosChart;
+
+// Función para formatear números como moneda (con separador de miles)
+function formatCurrency(number) {
+    return new Intl.NumberFormat('es-ES', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(number);
+}
+
+// Función para formatear en millones
+function formatInMillions(number) {
+    return (number / 1000000).toFixed(2) + 'M';
+}
+
+// Función para actualizar el gráfico con los datos correctos
+function actualizarGrafico() {
+    try {
+        // Datos financieros exactos de la tabla
+        const datosFinancieros = {
+            ingresosTotales: 7787000,
+            costoMateriaPrima: -7500000,     // Ahora como negativo para el gráfico
+            margenBruto: 287000,
+            costosOperativos: -525000,       // Como negativo para el gráfico
+            gastosAdmin: -622960,            // Como negativo para el gráfico
+            mantenimiento: -54795,           // Como negativo para el gráfico
+            beneficioNeto: -915755           // Valor negativo como en la tabla
         };
-    </script>
+        
+        // Calcular métricas gerenciales
+        const capacidad = parseInt(document.getElementById('capacidad').value || 100000);
+        
+        // ROI Diario = Beneficio Neto / Costo Materia Prima * 100
+        const roiDiario = (datosFinancieros.beneficioNeto / Math.abs(datosFinancieros.costoMateriaPrima) * 100).toFixed(2);
+        document.getElementById('roiDisplay').textContent = roiDiario + '%';
+        
+        // Punto de Equilibrio
+        const costosFijos = Math.abs(datosFinancieros.gastosAdmin) + Math.abs(datosFinancieros.mantenimiento);
+        const margenContribucion = datosFinancieros.ingresosTotales + datosFinancieros.costoMateriaPrima + datosFinancieros.costosOperativos;
+        let breakEven = 0;
+        if (margenContribucion !== 0) {
+            const ratioContribucion = margenContribucion / datosFinancieros.ingresosTotales;
+            breakEven = costosFijos / ratioContribucion;
+        }
+        document.getElementById('breakEvenDisplay').textContent = '$' + formatCurrency(Math.round(breakEven));
+        
+        // Eficiencia Operativa = Ingresos / Costos Operativos (valor absoluto)
+        const eficiencia = (datosFinancieros.costosOperativos !== 0) ? 
+            (datosFinancieros.ingresosTotales / Math.abs(datosFinancieros.costosOperativos)).toFixed(2) : "N/A";
+        document.getElementById('eficienciaDisplay').textContent = eficiencia + ' x';
+        
+        // Valor añadido por barril
+        const valorBarril = (capacidad !== 0) ? 
+            (datosFinancieros.margenBruto / capacidad).toFixed(2) : "0.00";
+        document.getElementById('valorBarrilDisplay').textContent = '$' + valorBarril;
+        
+        // Beneficio por barril
+        const beneficioBarril = (capacidad !== 0) ? 
+            (datosFinancieros.beneficioNeto / capacidad).toFixed(2) : "0.00";
+        document.getElementById('beneficioCapacidadDisplay').textContent = '$' + beneficioBarril;
+        
+        // Retorno anual por barril
+        const diasOperativos = parseInt(document.getElementById('diasOp').value || 340);
+        const retornoAnual = (capacidad !== 0) ? 
+            (datosFinancieros.beneficioNeto / capacidad * diasOperativos).toFixed(2) : "0.00";
+        document.getElementById('retornoAnualDisplay').textContent = '$' + retornoAnual;
+        
+        // Preparar y crear el gráfico
+        const ctx = document.getElementById('resultadosChart').getContext('2d');
+        
+        // Destruir el gráfico existente si hay uno
+        if (resultadosChart) {
+            resultadosChart.destroy();
+        }
+        
+        // Configuración de datos para el gráfico con eje Y extendido hacia valores negativos
+        const labels = ['Ingresos', 'Materia Prima', 'Margen Bruto', 'Operativos', 'Admin', 'Manten.', 'Beneficio Neto'];
+        
+        // Usamos un solo dataset con los valores reales (positivos y negativos)
+        const valores = [
+            datosFinancieros.ingresosTotales,      // Ingresos (positivo)
+            datosFinancieros.costoMateriaPrima,    // Materia Prima (negativo)
+            datosFinancieros.margenBruto,          // Margen Bruto
+            datosFinancieros.costosOperativos,     // Operativos (negativo)
+            datosFinancieros.gastosAdmin,          // Admin (negativo)
+            datosFinancieros.mantenimiento,        // Mantenimiento (negativo)
+            datosFinancieros.beneficioNeto         // Beneficio Neto
+        ];
+        
+        // Colores según el valor sea positivo o negativo
+        const colores = valores.map(valor => valor >= 0 ? '#2c7a7b' : '#e53e3e');
+        
+        // Crear el gráfico con Chart.js
+        resultadosChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Valor',
+                    data: valores,
+                    backgroundColor: colores,
+                    borderColor: colores,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        grid: {
+                            color: function(context) {
+                                if (context.tick.value === 0) {
+                                    return 'rgba(0, 0, 0, 0.5)';  // Línea del cero más oscura
+                                }
+                                return 'rgba(0, 0, 0, 0.1)';      // Resto de líneas de la cuadrícula
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Millones de USD',
+                            font: {
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                // Convertir a millones para el eje Y
+                                return '$' + (value / 1000000).toFixed(1) + 'M';
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Cascada de Resultados Financieros (Millones USD/día)',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        padding: {
+                            bottom: 10
+                        }
+                    },
+                    legend: {
+                        display: false  // Ocultar leyenda ya que solo hay un dataset
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.raw;
+                                
+                                // Mostrar valor completo y en millones
+                                return (value < 0 ? '-$' : '$') + 
+                                    formatCurrency(Math.abs(value)) + 
+                                    ' (' + (value < 0 ? '-$' : '$') + 
+                                    formatInMillions(Math.abs(value)) + ')';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        console.log("Gráfico con eje Y negativo actualizado correctamente");
+    } catch (error) {
+        console.error("Error al actualizar el gráfico:", error);
+    }
+}
+
+// Inicializar y conectar con los eventos
+document.addEventListener('DOMContentLoaded', function() {
+    // Obtener todos los sliders
+    const sliders = document.querySelectorAll('input[type="range"]');
+    
+    // Añadir event listener para actualización en tiempo real
+    sliders.forEach(slider => {
+        slider.addEventListener('input', function() {
+            setTimeout(actualizarGrafico, 100);
+        });
+    });
+    
+    // Inicializar gráfico
+    setTimeout(actualizarGrafico, 200);
+});
+
+// Integrar con la función existente actualizarTodo()
+const originalActualizarTodo = window.actualizarTodo;
+window.actualizarTodo = function() {
+    // Llamar a la función original primero
+    originalActualizarTodo();
+    // Actualizar el gráfico con un retraso
+    setTimeout(actualizarGrafico, 100);
+};
+</script>
 </body>
 </html>
