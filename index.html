@@ -79,6 +79,103 @@
                         </div>
                     </div>
                 </div>
+                
+                <div>
+                    <h3 class="font-medium text-gray-700 mb-3 mt-6">Precios de Venta (USD/bbl)</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="block mb-1 text-sm font-medium">Gasolina: $<span id="gasolina-valor">92</span></label>
+                                <input 
+                                    type="range" 
+                                    id="precio-gasolina"
+                                    min="70" 
+                                    max="120" 
+                                    value="92"
+                                    oninput="actualizarPrecioGasolina(this.value)"
+                                    class="w-full h-2 bg-red-100 rounded-full"
+                                />
+                            </div>
+                            
+                            <div>
+                                <label class="block mb-1 text-sm font-medium">Diesel: $<span id="diesel-valor">88</span></label>
+                                <input 
+                                    type="range" 
+                                    id="precio-diesel"
+                                    min="65" 
+                                    max="110" 
+                                    value="88"
+                                    oninput="actualizarPrecioDiesel(this.value)"
+                                    class="w-full h-2 bg-yellow-100 rounded-full"
+                                />
+                            </div>
+                            
+                            <div>
+                                <label class="block mb-1 text-sm font-medium">Jet Fuel: $<span id="jetfuel-valor">85</span></label>
+                                <input 
+                                    type="range" 
+                                    id="precio-jetfuel"
+                                    min="60" 
+                                    max="110" 
+                                    value="85"
+                                    oninput="actualizarPrecioJetFuel(this.value)"
+                                    class="w-full h-2 bg-blue-100 rounded-full"
+                                />
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="block mb-1 text-sm font-medium">LPG: $<span id="lpg-valor">42</span></label>
+                                <input 
+                                    type="range" 
+                                    id="precio-lpg"
+                                    min="30" 
+                                    max="60" 
+                                    value="42"
+                                    oninput="actualizarPrecioLPG(this.value)"
+                                    class="w-full h-2 bg-green-100 rounded-full"
+                                />
+                            </div>
+                            
+                            <div>
+                                <label class="block mb-1 text-sm font-medium">Coque: $<span id="coque-valor">38</span></label>
+                                <input 
+                                    type="range" 
+                                    id="precio-coque"
+                                    min="20" 
+                                    max="60" 
+                                    value="38"
+                                    oninput="actualizarPrecioCoque(this.value)"
+                                    class="w-full h-2 bg-gray-200 rounded-full"
+                                />
+                            </div>
+                            
+                            <div>
+                                <label class="block mb-1 text-sm font-medium">Otros: $<span id="otros-valor">65</span></label>
+                                <input 
+                                    type="range" 
+                                    id="precio-otros"
+                                    min="40" 
+                                    max="90" 
+                                    value="65"
+                                    oninput="actualizarPrecioOtros(this.value)"
+                                    class="w-full h-2 bg-indigo-100 rounded-full"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-3 rounded mt-4">
+                        <p class="text-sm text-blue-800">
+                            <span class="font-medium">Crack Spread:</span> $<span id="crack-spread">14.33</span>/bbl
+                        </p>
+                        <p class="text-xs text-blue-600 mt-1">
+                            Diferencia entre precio de crudo y promedio de productos refinados principales.
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -91,15 +188,15 @@
             </div>
             
             <div class="bg-green-100 p-4 rounded-lg shadow">
-                <h3 class="text-sm font-medium text-green-800">Costo de Materia Prima</h3>
-                <p class="text-2xl font-bold" id="costo-display">$7,500,000</p>
+                <h3 class="text-sm font-medium text-green-800">Ingresos</h3>
+                <p class="text-2xl font-bold" id="ingresos-display">$8,250,000</p>
                 <p class="text-xs text-green-600">diarios</p>
             </div>
             
             <div class="bg-purple-100 p-4 rounded-lg shadow">
-                <h3 class="text-sm font-medium text-purple-800">Rendimiento Simulado</h3>
-                <p class="text-2xl font-bold">Funcionando</p>
-                <p class="text-xs text-purple-600">correctamente</p>
+                <h3 class="text-sm font-medium text-purple-800">Beneficio Bruto</h3>
+                <p class="text-2xl font-bold" id="beneficio-display">$750,000</p>
+                <p class="text-xs text-purple-600">diario</p>
             </div>
         </div>
         
@@ -162,12 +259,135 @@
             actualizarCostoMateriaPrima();
         }
         
+        // Variables para rendimientos fijos
+        const rendGasolina = 30;
+        const rendDiesel = 28;
+        const rendJetFuel = 8;
+        const rendLPG = 6;
+        const rendCoque = 7;
+        const rendOtros = 21;
+        
+        // Precios iniciales
+        let precioGasolina = 92;
+        let precioDiesel = 88;
+        let precioJetFuel = 85;
+        let precioLPG = 42;
+        let precioCoque = 38;
+        let precioOtros = 65;
+        
+        function actualizarPrecioGasolina(valor) {
+            precioGasolina = parseInt(valor);
+            document.getElementById('gasolina-valor').textContent = valor;
+            actualizarCrackSpread();
+            actualizarIngresos();
+        }
+        
+        function actualizarPrecioDiesel(valor) {
+            precioDiesel = parseInt(valor);
+            document.getElementById('diesel-valor').textContent = valor;
+            actualizarCrackSpread();
+            actualizarIngresos();
+        }
+        
+        function actualizarPrecioJetFuel(valor) {
+            precioJetFuel = parseInt(valor);
+            document.getElementById('jetfuel-valor').textContent = valor;
+            actualizarCrackSpread();
+            actualizarIngresos();
+        }
+        
+        function actualizarPrecioLPG(valor) {
+            precioLPG = parseInt(valor);
+            document.getElementById('lpg-valor').textContent = valor;
+            actualizarIngresos();
+        }
+        
+        function actualizarPrecioCoque(valor) {
+            precioCoque = parseInt(valor);
+            document.getElementById('coque-valor').textContent = valor;
+            actualizarIngresos();
+        }
+        
+        function actualizarPrecioOtros(valor) {
+            precioOtros = parseInt(valor);
+            document.getElementById('otros-valor').textContent = valor;
+            actualizarIngresos();
+        }
+        
+        function actualizarCrackSpread() {
+            const precioCrudo = parseInt(document.getElementById('precio-crudo').value);
+            const promedioPrincipales = (precioGasolina + precioDiesel + precioJetFuel) / 3;
+            const crackSpread = (promedioPrincipales - precioCrudo).toFixed(2);
+            document.getElementById('crack-spread').textContent = crackSpread;
+        }
+        
         function actualizarCostoMateriaPrima() {
             const capacidad = parseInt(document.getElementById('capacidad').value);
             const precioCrudo = parseInt(document.getElementById('precio-crudo').value);
             const costo = capacidad * precioCrudo;
-            document.getElementById('costo-display').textContent = '$' + formatNumber(costo);
+            document.getElementById('costo-display').textContent = '
+</body>
+</html>
+ + formatNumber(costo);
+            actualizarCrackSpread();
+            actualizarIngresos();
         }
+        
+        function actualizarIngresos() {
+            const capacidad = parseInt(document.getElementById('capacidad').value);
+            const precioCrudo = parseInt(document.getElementById('precio-crudo').value);
+            
+            // Cálculo de producción por producto
+            const prodGasolina = Math.round(capacidad * rendGasolina / 100);
+            const prodDiesel = Math.round(capacidad * rendDiesel / 100);
+            const prodJetFuel = Math.round(capacidad * rendJetFuel / 100);
+            const prodLPG = Math.round(capacidad * rendLPG / 100);
+            const prodCoque = Math.round(capacidad * rendCoque / 100);
+            const prodOtros = Math.round(capacidad * rendOtros / 100);
+            
+            // Cálculo de ingresos por producto
+            const ingresosGasolina = prodGasolina * precioGasolina;
+            const ingresosDiesel = prodDiesel * precioDiesel;
+            const ingresosJetFuel = prodJetFuel * precioJetFuel;
+            const ingresosLPG = prodLPG * precioLPG;
+            const ingresosCoque = prodCoque * precioCoque;
+            const ingresosOtros = prodOtros * precioOtros;
+            
+            // Ingresos totales
+            const ingresosTotales = ingresosGasolina + ingresosDiesel + ingresosJetFuel + 
+                                   ingresosLPG + ingresosCoque + ingresosOtros;
+            
+            // Costo de materia prima y beneficio bruto
+            const costoMateriaPrima = capacidad * precioCrudo;
+            const beneficioBruto = ingresosTotales - costoMateriaPrima;
+            
+            // Actualizar displays
+            document.getElementById('ingresos-display').textContent = '
+</body>
+</html>
+ + formatNumber(ingresosTotales);
+            document.getElementById('beneficio-display').textContent = '
+</body>
+</html>
+ + formatNumber(beneficioBruto);
+            
+            // Cambiar color del beneficio según sea positivo o negativo
+            const beneficioElement = document.getElementById('beneficio-display');
+            if (beneficioBruto >= 0) {
+                beneficioElement.parentElement.classList.remove('bg-red-100');
+                beneficioElement.parentElement.classList.add('bg-purple-100');
+            } else {
+                beneficioElement.parentElement.classList.remove('bg-purple-100');
+                beneficioElement.parentElement.classList.add('bg-red-100');
+            }
+        }
+        
+        // Inicialización
+        window.onload = function() {
+            actualizarCostoMateriaPrima();
+            actualizarCrackSpread();
+            actualizarIngresos();
+        };
     </script>
 </body>
 </html>
