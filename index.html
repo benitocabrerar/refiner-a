@@ -1,0 +1,557 @@
+Voy a generar el código HTML completo del simulador de refinería para que puedas utilizarlo directamente. Este código es una versión estática (no reactiva) que incorpora todos los elementos visuales y la lógica de cálculo del simulador.
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIMREF-HC 2025: Simulador de Refinería</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Recharts y React CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/recharts/umd/Recharts.min.js"></script>
+    <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+</head>
+<body class="bg-gray-100">
+    <div id="root" class="container mx-auto py-8 px-4"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { 
+            LineChart, Line, BarChart, Bar, ComposedChart, PieChart, Pie, 
+            XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+        } = Recharts;
+
+        function RefineriaSimplificada() {
+            // Estado para los parámetros principales
+            const [capacidad, setCapacidad] = useState(100000);
+            const [api, setApi] = useState(25);
+            const [precioCrudo, setPrecioCrudo] = useState(75);
+            
+            // Estado para precios de productos
+            const [precioGasolina, setPrecioGasolina] = useState(92);
+            const [precioDiesel, setPrecioDiesel] = useState(88);
+            const [precioJetFuel, setPrecioJetFuel] = useState(85);
+            const [precioLPG, setPrecioLPG] = useState(42);
+            const [precioCoque, setPrecioCoque] = useState(38);
+            const [precioOtros, setPrecioOtros] = useState(65);
+            
+            // Estado para los parámetros financieros
+            const [costoOperativoBarril, setCostoOperativoBarril] = useState(5.25);
+            const [gastoAdminPct, setGastoAdminPct] = useState(8);
+            const [mantenimientoAnual, setMantenimientoAnual] = useState(20); // Millones de USD al año
+            const [tasaImpuestos, setTasaImpuestos] = useState(30);
+            const [diasOperativos, setDiasOperativos] = useState(340);
+            
+            // Rendimientos fijos
+            const rendGasolina = 30;
+            const rendDiesel = 28;
+            const rendJetFuel = 8;
+            const rendLPG = 6;
+            const rendCoque = 7;
+            const rendOtros = 21;
+            
+            // Cálculos derivados - Producción
+            const prodGasolina = Math.round(capacidad * rendGasolina / 100);
+            const prodDiesel = Math.round(capacidad * rendDiesel / 100);
+            const prodJetFuel = Math.round(capacidad * rendJetFuel / 100);
+            const prodLPG = Math.round(capacidad * rendLPG / 100);
+            const prodCoque = Math.round(capacidad * rendCoque / 100);
+            const prodOtros = Math.round(capacidad * rendOtros / 100);
+            
+            // Cálculos derivados - Ingresos
+            const ingresosGasolina = prodGasolina * precioGasolina;
+            const ingresosDiesel = prodDiesel * precioDiesel;
+            const ingresosJetFuel = prodJetFuel * precioJetFuel;
+            const ingresosLPG = prodLPG * precioLPG;
+            const ingresosCoque = prodCoque * precioCoque;
+            const ingresosOtros = prodOtros * precioOtros;
+            
+            const ingresosTotales = ingresosGasolina + ingresosDiesel + ingresosJetFuel + 
+                                   ingresosLPG + ingresosCoque + ingresosOtros;
+            
+            // Cálculos financieros
+            const costoMateriaPrima = capacidad * precioCrudo;
+            const margenBruto = ingresosTotales - costoMateriaPrima;
+            const margenBrutoBarril = margenBruto / capacidad;
+            
+            const costosOperativos = capacidad * costoOperativoBarril;
+            const gastosAdmin = ingresosTotales * (gastoAdminPct / 100);
+            const costoMantenimientoDiario = (mantenimientoAnual * 1000000) / 365;
+            const margenOperativo = margenBruto - costosOperativos - gastosAdmin - costoMantenimientoDiario;
+            const ebit = margenOperativo; // Sin depreciación porque ya está amortizada
+            const impuestos = Math.max(0, ebit * (tasaImpuestos / 100));
+            const beneficioNeto = ebit - impuestos;
+            
+            // Anualizados
+            const ingresosAnuales = ingresosTotales * diasOperativos;
+            const beneficioNetoAnual = beneficioNeto * diasOperativos;
+            
+            // Formato de números
+            const formatNumber = (num) => {
+                return Math.round(num).toLocaleString();
+            };
+            
+            // Formato para números con decimales
+            const formatDecimal = (num, decimals = 2) => {
+                return num.toFixed(decimals);
+            };
+
+            // Datos para gráficos
+            const datosContribucionMargen = [
+                { nombre: 'Gasolina', rendimiento: rendGasolina, precio: precioGasolina, margen: precioGasolina - precioCrudo, contribucion: (precioGasolina - precioCrudo) * rendGasolina / 100 },
+                { nombre: 'Diesel', rendimiento: rendDiesel, precio: precioDiesel, margen: precioDiesel - precioCrudo, contribucion: (precioDiesel - precioCrudo) * rendDiesel / 100 },
+                { nombre: 'Jet Fuel', rendimiento: rendJetFuel, precio: precioJetFuel, margen: precioJetFuel - precioCrudo, contribucion: (precioJetFuel - precioCrudo) * rendJetFuel / 100 },
+                { nombre: 'LPG', rendimiento: rendLPG, precio: precioLPG, margen: precioLPG - precioCrudo, contribucion: (precioLPG - precioCrudo) * rendLPG / 100 },
+                { nombre: 'Coque', rendimiento: rendCoque, precio: precioCoque, margen: precioCoque - precioCrudo, contribucion: (precioCoque - precioCrudo) * rendCoque / 100 },
+                { nombre: 'Otros', rendimiento: rendOtros, precio: precioOtros, margen: precioOtros - precioCrudo, contribucion: (precioOtros - precioCrudo) * rendOtros / 100 }
+            ];
+
+            const datosProduccion = [
+                { name: 'Gasolina', valor: rendGasolina },
+                { name: 'Diesel', valor: rendDiesel },
+                { name: 'Jet Fuel', valor: rendJetFuel },
+                { name: 'LPG', valor: rendLPG },
+                { name: 'Coque', valor: rendCoque },
+                { name: 'Otros', valor: rendOtros }
+            ];
+
+            return (
+                <div className="p-4 bg-gray-100 max-w-6xl mx-auto">
+                    <h1 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-lg shadow">
+                        SIMREF-HC 2025: Simulador de Refinería
+                    </h1>
+                    
+                    <div className="bg-white rounded-lg shadow p-6 mb-6">
+                        <h2 className="text-xl font-bold mb-4 border-b pb-2">Parámetros</h2>
+                        
+                        <div className="space-y-6">
+                            <div>
+                                <h3 className="font-medium text-gray-700 mb-3">Operativos</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block mb-1 text-sm font-medium">Capacidad: {formatNumber(capacidad)} bbl/día</label>
+                                        <input 
+                                            type="range" 
+                                            min="50000" 
+                                            max="200000" 
+                                            value={capacidad}
+                                            onChange={(e) => setCapacidad(parseInt(e.target.value))}
+                                            className="w-full h-2 bg-blue-100 rounded-full"
+                                        />
+                                        <div className="flex justify-between text-xs text-gray-500">
+                                            <span>50,000</span>
+                                            <span>200,000</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="block mb-1 text-sm font-medium">Calidad API: {api}°</label>
+                                        <input 
+                                            type="range" 
+                                            min="15" 
+                                            max="40" 
+                                            value={api}
+                                            onChange={(e) => setApi(parseFloat(e.target.value))}
+                                            className="w-full h-2 bg-blue-100 rounded-full"
+                                        />
+                                        <div className="flex justify-between text-xs text-gray-500">
+                                            <span>Pesado (15°)</span>
+                                            <span>Ligero (40°)</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="block mb-1 text-sm font-medium">Precio del Crudo: ${precioCrudo}/bbl</label>
+                                        <input 
+                                            type="range" 
+                                            min="40" 
+                                            max="120" 
+                                            value={precioCrudo}
+                                            onChange={(e) => setPrecioCrudo(parseFloat(e.target.value))}
+                                            className="w-full h-2 bg-blue-100 rounded-full"
+                                        />
+                                        <div className="flex justify-between text-xs text-gray-500">
+                                            <span>$40</span>
+                                            <span>$120</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 className="font-medium text-gray-700 mb-3">Precios de Venta (USD/bbl)</h3>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block mb-1 text-sm font-medium">Gasolina: ${precioGasolina}</label>
+                                            <input 
+                                                type="range" 
+                                                min="70" 
+                                                max="120" 
+                                                value={precioGasolina}
+                                                onChange={(e) => setPrecioGasolina(parseInt(e.target.value))}
+                                                className="w-full h-2 bg-red-100 rounded-full"
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block mb-1 text-sm font-medium">Diesel: ${precioDiesel}</label>
+                                            <input 
+                                                type="range" 
+                                                min="65" 
+                                                max="110" 
+                                                value={precioDiesel}
+                                                onChange={(e) => setPrecioDiesel(parseInt(e.target.value))}
+                                                className="w-full h-2 bg-yellow-100 rounded-full"
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block mb-1 text-sm font-medium">Jet Fuel: ${precioJetFuel}</label>
+                                            <input 
+                                                type="range" 
+                                                min="60" 
+                                                max="110" 
+                                                value={precioJetFuel}
+                                                onChange={(e) => setPrecioJetFuel(parseInt(e.target.value))}
+                                                className="w-full h-2 bg-blue-100 rounded-full"
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block mb-1 text-sm font-medium">LPG: ${precioLPG}</label>
+                                            <input 
+                                                type="range" 
+                                                min="30" 
+                                                max="60" 
+                                                value={precioLPG}
+                                                onChange={(e) => setPrecioLPG(parseInt(e.target.value))}
+                                                className="w-full h-2 bg-green-100 rounded-full"
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block mb-1 text-sm font-medium">Coque: ${precioCoque}</label>
+                                            <input 
+                                                type="range" 
+                                                min="20" 
+                                                max="60" 
+                                                value={precioCoque}
+                                                onChange={(e) => setPrecioCoque(parseInt(e.target.value))}
+                                                className="w-full h-2 bg-gray-200 rounded-full"
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block mb-1 text-sm font-medium">Otros: ${precioOtros}</label>
+                                            <input 
+                                                type="range" 
+                                                min="40" 
+                                                max="90" 
+                                                value={precioOtros}
+                                                onChange={(e) => setPrecioOtros(parseInt(e.target.value))}
+                                                className="w-full h-2 bg-indigo-100 rounded-full"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="bg-blue-50 p-3 rounded mt-4">
+                                    <p className="text-sm text-blue-800">
+                                        <span className="font-medium">Crack Spread:</span> ${(((precioGasolina + precioDiesel + precioJetFuel) / 3) - precioCrudo).toFixed(2)}/bbl
+                                    </p>
+                                    <p className="text-xs text-blue-600 mt-1">
+                                        Diferencia entre precio de crudo y promedio de productos refinados principales.
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            {/* Parámetros financieros para refinería existente */}
+                            <div>
+                                <h3 className="font-medium text-gray-700 mb-3">Parámetros Financieros</h3>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block mb-1 text-sm font-medium">Costo Operativo: ${costoOperativoBarril}/bbl</label>
+                                            <input 
+                                                type="range" 
+                                                min="2" 
+                                                max="10" 
+                                                step="0.25"
+                                                value={costoOperativoBarril}
+                                                onChange={(e) => setCostoOperativoBarril(parseFloat(e.target.value))}
+                                                className="w-full h-2 bg-orange-100 rounded-full"
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block mb-1 text-sm font-medium">Gastos Admin: {gastoAdminPct}% de ingresos</label>
+                                            <input 
+                                                type="range" 
+                                                min="3" 
+                                                max="15" 
+                                                value={gastoAdminPct}
+                                                onChange={(e) => setGastoAdminPct(parseInt(e.target.value))}
+                                                className="w-full h-2 bg-purple-100 rounded-full"
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block mb-1 text-sm font-medium">Mantenimiento: ${mantenimientoAnual}M USD/año</label>
+                                            <input 
+                                                type="range" 
+                                                min="5" 
+                                                max="50" 
+                                                step="5"
+                                                value={mantenimientoAnual}
+                                                onChange={(e) => setMantenimientoAnual(parseInt(e.target.value))}
+                                                className="w-full h-2 bg-gray-200 rounded-full"
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block mb-1 text-sm font-medium">Tasa Impuestos: {tasaImpuestos}%</label>
+                                            <input 
+                                                type="range" 
+                                                min="15" 
+                                                max="40" 
+                                                value={tasaImpuestos}
+                                                onChange={(e) => setTasaImpuestos(parseInt(e.target.value))}
+                                                className="w-full h-2 bg-green-100 rounded-full"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="mt-4">
+                                    <label className="block mb-1 text-sm font-medium">Días Operativos al Año: {diasOperativos}</label>
+                                    <input 
+                                        type="range" 
+                                        min="300" 
+                                        max="360" 
+                                        value={diasOperativos}
+                                        onChange={(e) => setDiasOperativos(parseInt(e.target.value))}
+                                        className="w-full h-2 bg-blue-100 rounded-full"
+                                    />
+                                    <div className="flex justify-between text-xs text-gray-500">
+                                        <span>300 días (mayor mantenimiento)</span>
+                                        <span>360 días (operación continua)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Indicadores Principales */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div className="bg-blue-100 p-4 rounded-lg shadow">
+                            <h3 className="text-sm font-medium text-blue-800">Capacidad</h3>
+                            <p className="text-2xl font-bold">{formatNumber(capacidad)}</p>
+                            <p className="text-xs text-blue-600">barriles por día</p>
+                        </div>
+                        
+                        <div className="bg-green-100 p-4 rounded-lg shadow">
+                            <h3 className="text-sm font-medium text-green-800">Ingresos</h3>
+                            <p className="text-2xl font-bold">${formatNumber(ingresosTotales)}</p>
+                            <p className="text-xs text-green-600">diarios</p>
+                        </div>
+                        
+                        <div className={`${beneficioNeto >= 0 ? 'bg-green-100' : 'bg-red-100'} p-4 rounded-lg shadow`}>
+                            <h3 className="text-sm font-medium text-purple-800">Beneficio Neto</h3>
+                            <p className="text-2xl font-bold">${formatNumber(beneficioNeto)}</p>
+                            <p className="text-xs text-purple-600">diario</p>
+                        </div>
+                    </div>
+                    
+                    {/* Gráficos */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        {/* Gráfico de Distribución de Productos */}
+                        <div className="bg-white rounded-lg shadow p-4">
+                            <h3 className="text-lg font-medium text-gray-700 mb-4">Distribución de Productos</h3>
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={datosProduccion}
+                                            cx="50%"
+                                            cy="50%"
+                                            labelLine={true}
+                                            label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                            outerRadius={80}
+                                            fill="#8884d8"
+                                            dataKey="valor"
+                                        />
+                                        <Tooltip />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                        
+                        {/* Gráfico de Contribución por Producto */}
+                        <div className="bg-white rounded-lg shadow p-4">
+                            <h3 className="text-lg font-medium text-gray-700 mb-4">Contribución al Margen por Producto</h3>
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <ComposedChart
+                                        data={datosContribucionMargen}
+                                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="nombre" />
+                                        <YAxis />
+                                        <Tooltip />
+                                        <Legend />
+                                        <Bar dataKey="contribucion" fill="#82ca9d" name="Contribución ($)" />
+                                        <Line type="monotone" dataKey="margen" stroke="#ff7300" name="Margen ($/bbl)" />
+                                    </ComposedChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Estado Financiero */}
+                    <div className="bg-white rounded-lg shadow p-6 mb-6">
+                        <h2 className="text-xl font-bold mb-4 border-b pb-2">Análisis Financiero</h2>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* Columna Izquierda: Estado de Resultados Diario */}
+                            <div>
+                                <h3 className="font-medium text-gray-700 mb-3">Estado de Resultados Diario</h3>
+                                <table className="w-full text-sm">
+                                    <tbody>
+                                        <tr className="border-b">
+                                            <td className="py-2 font-medium">Ingresos Totales</td>
+                                            <td className="py-2 text-right">${formatNumber(ingresosTotales)}</td>
+                                        </tr>
+                                        <tr className="border-b">
+                                            <td className="py-2 font-medium">Costo de Materia Prima</td>
+                                            <td className="py-2 text-right text-red-600">-${formatNumber(costoMateriaPrima)}</td>
+                                        </tr>
+                                        <tr className="border-b bg-gray-50">
+                                            <td className="py-2 font-medium">Margen Bruto</td>
+                                            <td className={`py-2 text-right font-medium ${margenBruto >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                ${formatNumber(margenBruto)}
+                                            </td>
+                                        </tr>
+                                        <tr className="border-b">
+                                            <td className="py-2">Costos Operativos</td>
+                                            <td className="py-2 text-right text-red-600">-${formatNumber(costosOperativos)}</td>
+                                        </tr>
+                                        <tr className="border-b">
+                                            <td className="py-2">Gastos Administrativos</td>
+                                            <td className="py-2 text-right text-red-600">-${formatNumber(gastosAdmin)}</td>
+                                        </tr>
+                                        <tr className="border-b">
+                                            <td className="py-2">Mantenimiento</td>
+                                            <td className="py-2 text-right text-red-600">-${formatNumber(costoMantenimientoDiario)}</td>
+                                        </tr>
+                                        <tr className="border-b bg-gray-50">
+                                            <td className="py-2 font-medium">EBIT</td>
+                                            <td className={`py-2 text-right font-medium ${ebit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                ${formatNumber(ebit)}
+                                            </td>
+                                        </tr>
+                                        <tr className="border-b">
+                                            <td className="py-2">Impuestos ({tasaImpuestos}%)</td>
+                                            <td className="py-2 text-right text-red-600">-${formatNumber(impuestos)}</td>
+                                        </tr>
+                                        <tr className="bg-gray-100">
+                                            <td className="py-3 font-bold">Beneficio Neto</td>
+                                            <td className={`py-3 text-right font-bold ${beneficioNeto >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                ${formatNumber(beneficioNeto)}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            {/* Columna Derecha: Métricas y Proyecciones */}
+                            <div>
+                                <h3 className="font-medium text-gray-700 mb-3">Métricas Financieras</h3>
+                                
+                                <div className="space-y-6">
+                                    {/* Métricas por Barril */}
+                                    <div className="bg-gray-50 rounded p-4">
+                                        <h4 className="font-medium text-gray-700 mb-2">Por Barril Procesado</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <p className="text-sm text-gray-500">Ingreso Promedio</p>
+                                                <p className="text-xl font-medium">${formatDecimal(ingresosTotales / capacidad)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Margen Bruto</p>
+                                                <p className={`text-xl font-medium ${margenBrutoBarril >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                    ${formatDecimal(margenBrutoBarril)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Proyección Anual */}
+                                    <div className="bg-blue-50 rounded p-4">
+                                        <h4 className="font-medium text-blue-700 mb-2">Proyección Anual ({diasOperativos} días)</h4>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                                <p className="text-sm text-blue-700">Ingresos Anuales</p>
+                                                <p className="text-sm font-medium">${formatNumber(ingresosAnuales)}</p>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <p className="text-sm text-blue-700">Beneficio Neto Anual</p>
+                                                <p className={`text-sm font-medium ${beneficioNetoAnual >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                    ${formatNumber(beneficioNetoAnual)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Métricas de Rentabilidad */}
+                                    <div className={`${beneficioNetoAnual > 0 ? 'bg-green-50' : 'bg-red-50'} rounded p-4`}>
+                                        <h4 className="font-medium text-gray-700 mb-2">Rentabilidad Anual</h4>
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center"><p className="text-sm text-gray-600">Margen de Beneficio:</p>
+                                                <p className={`text-lg font-medium ${(beneficioNetoAnual / ingresosAnuales) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {formatDecimal((beneficioNetoAnual / ingresosAnuales) * 100)}%
+                                                </p>
+                                            </div>
+                                            
+                                            {beneficioNetoAnual <= 0 && (
+                                                <div className="bg-red-100 p-3 rounded mt-2">
+                                                    <p className="text-sm text-red-700">
+                                                        Con las condiciones actuales, la operación no es rentable.
+                                                        Ajuste los parámetros para lograr un beneficio neto positivo.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Pie de página */}
+                    <footer className="mt-6 text-center text-gray-600 border-t pt-4 pb-6">
+                        <p className="mb-1">Desarrollado por Ing. Benito Cabrera R., MBA</p>
+                        <p className="text-sm">Derechos reservados ©2025</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<RefineriaSimplificada />);
+    </script>
+</body>
+</html>
